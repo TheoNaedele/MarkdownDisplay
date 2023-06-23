@@ -77,18 +77,21 @@
           <input id="textInput" class="form-control" type="text" v-model="inputText" @input="handleConfirm">
         </div>
 		
-		<hr>
-		
-		<div class="markdown-container">
-          <div v-html="renderedMarkdown"></div>
+        <hr>
+      
+        <div class="markdown-container">
+              <div v-html="renderedMarkdown"></div>
         </div>
-        
+        <div>
+          <button class="btn btn-outline-secondary" type="button" @click="loadNewMarkdownTest">Load New Markdown</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     new Vue({
       el: '#app',
@@ -100,17 +103,17 @@
       methods: {
         renderMarkdownContent() {
           // Read the Markdown file
-          fetch('static/markdown.md')
+          fetch('markdown.md')
             .then(response => response.text())
             .then(markdownContent => {
               let modifiedText = markdownContent;
-              if (this.selectedInputType === 'author') {
-                modifiedText += `\n\nAuthor: ${this.inputText}`;
-              } else if (this.selectedInputType === 'referenceNumber') {
-                modifiedText += `\nReference Number: ${this.inputText}`;
-              } else if (this.selectedInputType === 'id') {
-                modifiedText += `\nID: ${this.inputText}`;
-              }
+              // if (this.selectedInputType === 'author') {
+              //   modifiedText += `\n\nAuthor: ${this.inputText}`;
+              // } else if (this.selectedInputType === 'referenceNumber') {
+              //   modifiedText += `\nReference Number: ${this.inputText}`;
+              // } else if (this.selectedInputType === 'id') {
+              //   modifiedText += `\nID: ${this.inputText}`;
+              // }
 
               const md = window.markdownit();
               this.renderedMarkdown = md.render(modifiedText);
@@ -121,6 +124,26 @@
         },
         handleConfirm() {
           this.renderMarkdownContent();
+        },
+        loadNewMarkdownTest: async function() {
+          var url = new URL("/api/getNewMarkdownContent",window.location.origin)
+          const md = window.markdownit();
+          fetch(url)
+            .then(response => response.text())
+            .then(markdownContent => {
+              let modifiedText = markdownContent;
+              const md = window.markdownit();
+              const inlineMarkdown = "# Houdini Engine for Unreal - Version 2\n\n> The source code in this branch is intended to be used with Unreal Engine 5.0 and 5.1\n\nWelcome to the repository for the Houdini Engine For Unreal Plugin.\n\nThis plug-in brings Houdini's powerful and flexible procedural workflow into Unreal Engine through Houdini Digital Assets. Artists can interactively adjust asset parameters inside the editor and use Unreal assets as inputs. Houdini's procedural engine will then 'cook' the asset and the results will be available in the editor without the need for baking.\n\nDocumentation for the plugin is available on the Side FX Website.\n\n\n# Feedback\n\nPlease send bug reports, feature requests and questions to Side FX's support.\n\n\n# Compatibility\n\nCurrently, the plugins has binaries that have been built for UE5.0, UE4.27 and UE4.26, and is linked with the latest production build of Houdini.\n\nSource code for the plugin is available on this repository for UE5.1, UE5.0, UE4.27, UE4.26.\n\n> Please note that UE5.1 and UE5.0 use the same source files/branches, the 5.0 sources are also intended to be used with 5.1.\n\n# Installing the plugin\n01. In this GitHub repository, click Releases on the right side. \n02. Download the Houdini Engine version zip file that matches your Houdini version. \n03. Extract the HoudiniEngine folder to the Plugins\Runtime of your Unreal Directory. You can either copy it to Unreal's engine version directory or your Unreal project directory.\n\n In this example, Unreal's directory location is C:\\Program Files\\Epic Games\\UE_5.0\\Engine\\Plugins\\Runtime\\HoudiniEngine and the project directory is C:\\Unreal Projects\\MyGameProject\\Plugins\\HoudiniEngine\n\n Note: For Unreal Engine 5, you must use Unreal's project directory. \n\n## Verify the Plug-in works\nOnce you install the Houdini Engine plug-in, you can verify it's loaded properly. \n\n01. Open a new or existing Unreal project. \n02. In the main menu bar, you can see Houdini Engine as a new selection.\n\nYou should also check the Houdini Engine plug-in version matches your Houdini Version for the plug-in to work properly.\n\n01. In Unreal Engine main menu bar, click Edit then Plugins.\n02. For Houdini Engine, check the HX.Y.Z. version number matches your Houdini version. X.Y.Z means your Houdini Version number.\n\nYou can learn how to export an Houdini Digital Assets (HDA), import it into Unreal Engine, and update the asset from Assets documentation.\n\n# Building from source\n\n01. Get the UE source code from: https://github.com/EpicGames/UnrealEngine/releases\n01. Within the UE source, navigate to Engine/Plugins/Runtime, and clone this repo into a folder named HoudiniEngine. Alternatively, you can also install the plugin in your project, in the Plugins/Runtime directory.\n01. Download and install the correct build of 64-bit Houdini. To get the build number, look at the header of Source/HoudiniEngine/HoudiniEngine.Build.cs, under Houdini Version.\n01. Generate the UE4 Project Files (by running GenerateProjectFiles) and build Unreal, either in x64 Debug Editor or x64 Development Editor.\n01. When starting the Unreal Engine editor, go to Plug-ins menu and make sure to enable the HoudiniEngine v2 plug-in (in the Rendering section). Restart UE4 if you had to enable it.\n01. To confirm that the plug-in has been successfully installed and enabled, you can check that the editor main menu bar now has a new 'Houdini Engine' menu, between 'Edit' and 'Window'.\n01. You should now be able to import Houdini Digital Assets (HDA) .otl or .hda files or drag and drop them into the Content Browser.\n01. Once you have an HDA in the Content Browser you should be able to drag it into the Editor viewport. This will spawn a new Houdini Asset Actor. Geometry cooking will be done in a separate thread and geometry will be displayed once the cooking is complete. At this point you will be able to see asset parameters in the Details pane. Modifying any of the parameters will force the asset to recook and possibly update its geometry.\n\n"
+              console.log(marked.parse(modifiedText))
+              this.renderedMarkdown = md.render(modifiedText);
+            })
+            .catch(error => {
+              console.log('Error:', error);
+            });
+          // var markdown = await fetch(url, {method:'GET'})
+          // console.log(markdown.text())
+          // const md = window.markdownit();
+          // this.renderedMarkdown = md.render(markdown);
         }
       },
       mounted() {
