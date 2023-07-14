@@ -10,7 +10,8 @@ def parse_testcase(testcase):
         testcase_dict["Number"] = testcase_number
 
     # Extract headings and data fields
-    headings_and_content = re.findall(r"## (.*?)(?:\r?\n)+(.+?)(?=(?:\r?\n)+##|\Z)", testcase, re.DOTALL)
+     # Extract headings and data fields
+    headings_and_content = re.findall(r"## (.*?)(?:\r?\n)+((?:.|\n)*?)(?=(?:\r?\n)+##|\Z)", testcase, re.DOTALL)
     for heading, content in headings_and_content:
         testcase_dict[heading.strip()] = content.strip()
 
