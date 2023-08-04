@@ -1,25 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manual Test Interface</title>
+    <style>
+       body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f2f2f2;
+        }
+
+        #app {
+            max-width: 1000px;
+            width: 100%;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        p {
+            margin: 10px 0;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .pass-btn {
+            background-color: #3fc380;
+            flex-grow: 1;
+            margin-right: 5px;
+        }
+
+        .fail-btn {
+            background-color: #f44336;
+            flex-grow: 1;
+            margin-left: 5px;
+        }
+
+        .pass-btn,
+        .fail-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .test-container {
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+        }
+
+        .close-btn {
+            cursor: pointer;
+            float: right;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Display the modal when showModal is true */
+        .show-modal {
+            display: flex;
+        }
+        .modal-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .modal-label {
+            flex: 0 0 120px;
+            font-weight: bold;
+        }
+
+        .modal-textarea {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            resize: vertical; /* Allow vertical resizing */
+        }
+
+        .submit-btn {
+            background-color: #2196F3;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .test-step {
+            white-space: pre-line; /* Preserve newline characters */
+        }
+    </style>
 </head>
+
 <body>
     <div id="app">
         <h1>Manual Test Interface</h1>
-        <div v-if="currentTestStep">
+        <div v-if="currentTestStep" class="test-container">
             <h2>Test Step {{ currentStepIndex + 1 }}</h2>
-            <p>{{ currentTestStep.step }}</p>
-            <img id="TestStepImage" v-if="currentTestStep.image" :src="testImage" alt="Test Image" style="max-width: 100%; height: auto;">
-            <div>
-                <button @click="handlePass">Pass</button>
-                <button @click="handleFail">Fail</button>
-            </div>
+            <p class="test-step">{{ currentTestStep.step }}</p>
+            <img id="TestStepImage" v-if="currentTestStep.image" :src="testImage" alt="Test Image">
         </div>
         <div v-else>
             <p>No more test steps.</p>
         </div>
+        <div class="buttons-container">
+          <button class="pass-btn" @click="handlePass" style="width:45%">Pass</button>
+          <button class="fail-btn" @click="openModal" style="width:45%">Fail</button>
+      </div>
+
+      <div id="myModal" class="modal" :class="{ 'show-modal': showModal }">
+        <div class="modal-content">
+            <span class="close-btn" @click="closeModal">&times;</span>
+            <h2>Test Failed</h2>
+            <div class="modal-row">
+                <label class="modal-label" for="failReason">Enter Reason:</label>
+                <textarea class="modal-textarea" id="failReason" v-model="failureReason" rows="4"></textarea>
+            </div>
+            <div class="modal-row">
+                <button class="submit-btn" @click="handleFailWithReason">Submit</button>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
@@ -30,7 +198,9 @@
                 currentStepIndex: -1,
                 currentTestStep: null,
                 websocket: null,
-                testImage: null
+                testImage: null,
+                failureReason: '',
+                showModal: false
             },
             created() {
                 const ws = new WebSocket("ws://" + window.location.host + "/ws/");
@@ -44,45 +214,55 @@
             },
             methods: {
                 handlePass() {
+                    const data = {
+                        result: "Passed"
+                    }
                     console.log(`Test step ${this.currentStepIndex + 1} passed.`);
-                    this.websocket.send("Passed")
+                    const jsonData = JSON.stringify(data);
+                    this.websocket.send(jsonData)
                 },
-                handleFail() {
-                    console.log(`Test step ${this.currentStepIndex + 1} failed.`);
-                    this.websocket.send("Failed")
+                getImageByPath(path) {
+                    console.log(path)
+                    if (!path) {
+                        return
+                    }
+                    var url = new URL("/api/getImageByPath", window.location.origin)
+                    url.searchParams.set("path", path)
+                    fetch(url, { method: 'GET' })
+                        .then(response => response.blob())
+                        .then(blob => {
+                            // Create an object URL for the blob
+                            const objectURL = URL.createObjectURL(blob);
+                            this.testImage = objectURL
+                        })
+                        .catch(error => {
+                            console.error('Error fetching image:', error);
+                        });
                 },
-                getImageByPath(path){
-                  console.log(path)
-                  if(!path){
-                    return
-                  }
-                  var url = new URL("/api/getImageByPath",window.location.origin)
-                  url.searchParams.set("path", path)
-                  fetch(url, { method: 'GET' })
-                  .then(response => response.blob())
-                  .then(blob => {
-                      // Create an object URL for the blob
-                      const objectURL = URL.createObjectURL(blob);
-                      
-                      // Set the object URL as the src attribute of the img tag
-                      //document.getElementById('TestStepImage').src = objectURL;
-                      this.testImage = objectURL
-                  })
-                  .catch(error => {
-                      console.error('Error fetching image:', error);
-                  });
-                }
+                openModal() {
+                  console.log("Reached")
+                    this.showModal = true;
+                },
+                closeModal() {
+                    this.showModal = false;
+                },
+                handleFailWithReason() {
+                    if (this.failureReason) {
+                        console.log(`Test step ${this.currentStepIndex + 1} failed. Reason: ${this.failureReason}`);
+                        const data = {
+                            result: "Failed",
+                            reason: this.failureReason
+                        }
+                        const jsonData = JSON.stringify(data);
+                        this.websocket.send(jsonData)
+                        this.showModal = false;
+                        this.failureReason = '';
+                    }
+                },
 
             }
         });
     </script>
-
-  <style>
-    .test-container {
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin: 10px 0;
-    }
-  </style>
 </body>
+
 </html>
