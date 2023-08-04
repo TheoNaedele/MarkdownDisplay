@@ -1,7 +1,7 @@
 import os
 import uvicorn
 from fastapi import FastAPI, WebSocket
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 runningDir = os.path.dirname(os.path.abspath(__file__))
@@ -43,7 +43,13 @@ async def websocket_endpoint(websocket: WebSocket):
     except:
         connected_clients.remove(websocket)
 
-
+@api.get("/getImageByPath")
+def getImageByPath(path: str):
+    print(path)
+    fileObj = open(path,"rb")
+    fileContentBlob = fileObj.read()
+    fileObj.close()
+    return Response(fileContentBlob,media_type="application/octet_stream")
 
 if __name__ == "__main__":
     Main()

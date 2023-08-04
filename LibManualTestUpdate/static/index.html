@@ -11,7 +11,7 @@
         <div v-if="currentTestStep">
             <h2>Test Step {{ currentStepIndex + 1 }}</h2>
             <p>{{ currentTestStep.step }}</p>
-            <img v-if="currentTestStep.image" :src="currentTestStep.image" alt="Test Image" style="max-width: 100%; height: auto;">
+            <img id="TestStepImage" v-if="currentTestStep.image" :src="testImage" alt="Test Image" style="max-width: 100%; height: auto;">
             <div>
                 <button @click="handlePass">Pass</button>
                 <button @click="handleFail">Fail</button>
@@ -29,7 +29,8 @@
             data: {
                 currentStepIndex: -1,
                 currentTestStep: null,
-                websocket: null
+                websocket: null,
+                testImage: null
             },
             created() {
                 const ws = new WebSocket("ws://" + window.location.host + "/ws/");
@@ -38,6 +39,7 @@
                     const testStep = JSON.parse(event.data);
                     this.currentStepIndex++;
                     this.currentTestStep = testStep;
+                    this.getImageByPath(this.currentTestStep.image)
                 };
             },
             methods: {
@@ -49,6 +51,27 @@
                     console.log(`Test step ${this.currentStepIndex + 1} failed.`);
                     this.websocket.send("Failed")
                 },
+                getImageByPath(path){
+                  console.log(path)
+                  if(!path){
+                    return
+                  }
+                  var url = new URL("/api/getImageByPath",window.location.origin)
+                  url.searchParams.set("path", path)
+                  fetch(url, { method: 'GET' })
+                  .then(response => response.blob())
+                  .then(blob => {
+                      // Create an object URL for the blob
+                      const objectURL = URL.createObjectURL(blob);
+                      
+                      // Set the object URL as the src attribute of the img tag
+                      //document.getElementById('TestStepImage').src = objectURL;
+                      this.testImage = objectURL
+                  })
+                  .catch(error => {
+                      console.error('Error fetching image:', error);
+                  });
+                }
 
             }
         });
