@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Test Interface</title>
+</head>
+<body>
+    <div id="app">
+        <h1>Manual Test Interface</h1>
+        <div v-if="currentTestStep">
+            <h2>Test Step {{ currentStepIndex + 1 }}</h2>
+            <p>{{ currentTestStep.step }}</p>
+            <img v-if="currentTestStep.image" :src="currentTestStep.image" alt="Test Image" style="max-width: 100%; height: auto;">
+            <div>
+                <button @click="handlePass">Pass</button>
+                <button @click="handleFail">Fail</button>
+            </div>
+        </div>
+        <div v-else>
+            <p>No more test steps.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            data: {
+                currentStepIndex: -1,
+                currentTestStep: null,
+                websocket: null
+            },
+            created() {
+                const ws = new WebSocket("ws://" + window.location.host + "/ws/");
+                this.websocket = ws
+                this.websocket.onmessage = (event) => {
+                    const testStep = JSON.parse(event.data);
+                    this.currentStepIndex++;
+                    this.currentTestStep = testStep;
+                };
+            },
+            methods: {
+                handlePass() {
+                    console.log(`Test step ${this.currentStepIndex + 1} passed.`);
+                    this.websocket.send("Passed")
+                },
+                handleFail() {
+                    console.log(`Test step ${this.currentStepIndex + 1} failed.`);
+                    this.websocket.send("Failed")
+                },
+
+            }
+        });
+    </script>
+
+  <style>
+    .test-container {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 10px 0;
+    }
+  </style>
+</body>
+</html>
