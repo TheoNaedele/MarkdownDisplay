@@ -1,0 +1,13 @@
+{
+    "id":"id of the workitem to create",
+    "description":"description of the workitem to create",
+    "maintainer":"author of the workitem to create",
+    "teststeps": [
+        {
+            "step":"current step",
+            "action":"action to perform by the user",
+            "result":"expected result"
+        }
+    ],
+    "tags":"a list of tags for the workitem to create"
+}
