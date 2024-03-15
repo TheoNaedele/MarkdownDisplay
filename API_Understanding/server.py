@@ -1,10 +1,25 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List
+import secrets
 import os
 
 app = FastAPI()
+
+# Store authentication tokens
+auth_tokens = set()
+
+# Generate random authentication token
+def generate_auth_token():
+    return secrets.token_hex(16)  # Generate a random token of 32 characters
+
+# Endpoint to retrieve authentication token
+@app.get("/getToken")
+async def get_token():
+    token = generate_auth_token()
+    auth_tokens.add(token)
+    return {"token": token}
 
 class DataStorage:
     testcase = ""
@@ -29,7 +44,9 @@ class WorkItemRequest(BaseModel):
 dataStorage = DataStorage()
 
 @app.post("/postData")
-async def postData(data: WorkItemRequest):
+async def post_data(data: WorkItemRequest, token: str = Header(None)):
+    if token not in auth_tokens:
+        raise HTTPException(status_code=401, detail="Unauthorized, please provide a valid authentication token")
     try:
         validated_data = WorkItemRequest(**data.dict())
     except Exception as e:
@@ -67,3 +84,7 @@ def formatWorkitem(data: dict) -> str:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+#/redoc for api documentation
+#/docs for api te4sting
